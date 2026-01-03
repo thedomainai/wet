@@ -46,22 +46,14 @@ function isFuture(dateStr) { return dateStr > getToday(); }
 function isPast(dateStr) { return dateStr < getToday(); }
 
 // HTML Template
-function htmlTemplate(title, content, session = null, theme = 'night') {
+function htmlTemplate(title, content, session = null, theme = 'night', bottomNav = null) {
   const cssVars = generateCSSVariables(theme);
   const nav = session ? `
     <nav>
-      <div class="nav-left"><a href="/app/now?session=${session.id}" class="nav-title">AGI Task Manager</a></div>
-      <div class="nav-links">
-        <a href="/app/inbox?session=${session.id}">INBOX</a>
-        <a href="/app/now?session=${session.id}">NOW</a>
-        <a href="/app/upcoming?session=${session.id}">UPCOMING</a>
-        <a href="/app/projects?session=${session.id}">PROJECT</a>
-      </div>
-      <div class="nav-right">
-        <span class="user-badge">${session.username}</span>
-        <a href="/app/settings?session=${session.id}">Settings</a>
-      </div>
+      <a href="/app?session=${session.id}" class="nav-title">AGI Task Manager</a>
+      <a href="/app/settings?session=${session.id}" class="nav-settings">Settings</a>
     </nav>` : '';
+  const bottom = bottomNav || '';
   
   return `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><title>${title}</title>
@@ -76,11 +68,14 @@ function htmlTemplate(title, content, session = null, theme = 'night') {
   --font-script: 'Parisienne', cursive;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: var(--font-sans); background: var(--bg); color: var(--text-primary); padding: 20px; line-height: 1.6; min-height: 100vh; font-weight: 300; }
-nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
-.nav-title { font-family: var(--font-script); font-size: 20px; color: var(--text-primary); text-decoration: none; }
-.nav-links, .nav-right { display: flex; gap: 20px; align-items: center; }
-.user-badge { color: var(--text-secondary); font-size: 12px; }
+body { font-family: var(--font-sans); background: var(--bg); color: var(--text-primary); padding: 20px; padding-bottom: 80px; line-height: 1.6; min-height: 100vh; font-weight: 300; }
+nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; margin-bottom: 20px; }
+.nav-title { font-family: var(--font-script); font-size: 22px; color: var(--text-primary); text-decoration: none; }
+.nav-settings { color: var(--text-secondary); font-size: 13px; }
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg); border-top: 1px solid var(--border); padding: 12px 20px; display: flex; justify-content: center; gap: 20px; font-size: 13px; }
+.bottom-nav a { color: var(--text-secondary); text-decoration: none; }
+.bottom-nav a:hover, .bottom-nav a.active { color: var(--text-primary); }
+.bottom-nav .count { opacity: 0.6; }
 a { color: var(--link); text-decoration: none; }
 a:hover { color: var(--link-hover); }
 h1 { margin: 20px 0; font-family: var(--font-serif); font-weight: 500; font-size: 28px; }
@@ -91,30 +86,22 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: var(--b
 button { font-family: var(--font-sans); background: var(--btn-bg); color: var(--btn-text); border: 1px solid var(--border); padding: 8px 16px; cursor: pointer; font-size: 14px; }
 button:hover { background: var(--btn-bg-hover); color: var(--btn-text-hover); }
 .status-badge { display: inline-block; padding: 2px 8px; font-size: 11px; text-transform: uppercase; border-radius: 2px; }
-.status-todo { background: var(--status-todo); color: var(--bg); }
-.status-in-progress { background: var(--status-in-progress); color: var(--bg); }
-.status-waiting { background: var(--status-waiting); color: var(--bg); }
-.status-done { background: var(--status-done); color: var(--bg); }
-.status-wont-do { background: var(--status-wont-do); color: var(--bg); }
-.defer-btn { background: transparent; border: 1px solid var(--border); padding: 2px 6px; font-size: 12px; cursor: pointer; opacity: 0.6; }
-.defer-btn:hover { opacity: 1; border-color: var(--link); }
-.defer-form { display: contents; }
-.status-select { padding: 2px 8px; font-size: 11px; text-transform: uppercase; border-radius: 2px; cursor: pointer; border: none; appearance: none; -webkit-appearance: none; }
-.status-select:focus { outline: none; }
-.status-select.status-todo { background: var(--status-todo); color: var(--bg); }
-.status-select.status-in-progress { background: var(--status-in-progress); color: var(--bg); }
-.status-select.status-waiting { background: var(--status-waiting); color: var(--bg); }
-.status-select.status-done { background: var(--status-done); color: var(--bg); }
-.status-select.status-wont-do { background: var(--status-wont-do); color: var(--bg); }
 .card { background: var(--card-bg); border: 1px solid var(--border); padding: 15px; margin: 10px 0; }
-.task-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-bottom: 1px solid var(--border); }
-.task-item:last-child { border-bottom: none; }
-.task-item:hover { background: var(--card-bg); }
-.task-checkbox { width: 18px; height: 18px; accent-color: var(--status-done); cursor: pointer; }
-.task-name { flex: 1; }
-.task-name.done { text-decoration: line-through; color: var(--text-secondary); }
-.task-meta { font-size: 12px; color: var(--text-secondary); display: flex; gap: 10px; }
-.task-due.overdue { color: var(--alert); font-weight: 500; }
+.task-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+.task-checkbox { width: 18px; height: 18px; accent-color: var(--status-done); cursor: pointer; flex-shrink: 0; }
+.task-name { flex: 1; font-size: 15px; color: var(--text-primary); text-decoration: none; }
+.task-name:hover { color: var(--link); }
+.task-name.done { text-decoration: line-through; color: var(--text-secondary); opacity: 0.6; }
+.task-date { font-size: 12px; color: var(--text-secondary); flex-shrink: 0; }
+.task-date.overdue { color: var(--alert); }
+.date-group { margin-top: 24px; }
+.date-group:first-child { margin-top: 0; }
+.date-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 8px; }
+.add-task-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--border); padding: 12px 0; font-size: 15px; color: var(--text-primary); }
+.add-task-input:focus { outline: none; border-color: var(--text-secondary); }
+.add-task-input::placeholder { color: var(--text-secondary); opacity: 0.6; }
+.done-section { margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border); opacity: 0.5; }
+.done-section:hover { opacity: 0.8; }
 .error { color: var(--alert); }
 .form-group { margin: 15px 0; }
 .form-group label { display: block; margin-bottom: 5px; color: var(--text-secondary); font-size: 12px; text-transform: uppercase; }
@@ -127,7 +114,7 @@ details summary { cursor: pointer; color: var(--text-secondary); font-size: 12px
 .optional-fields { padding: 10px; background: var(--card-bg); border: 1px solid var(--border); margin-top: 5px; }
 .count-badge { background: var(--sub); padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-left: 5px; }
 .empty-state { color: var(--text-secondary); padding: 40px; text-align: center; }
-</style></head><body>${nav}${content}</body></html>`;
+</style></head><body>${nav}${content}${bottom}</body></html>`;
 }
 
 // Task form component
