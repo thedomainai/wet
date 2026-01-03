@@ -55,11 +55,11 @@ function htmlTemplate(title, content, session = null, theme = 'night') {
         <a href="/app/inbox?session=${session.id}">INBOX</a>
         <a href="/app/now?session=${session.id}">NOW</a>
         <a href="/app/upcoming?session=${session.id}">UPCOMING</a>
+        <a href="/app/projects?session=${session.id}">PROJECT</a>
       </div>
       <div class="nav-right">
         <span class="user-badge">${session.username}</span>
         <a href="/app/settings?session=${session.id}">Settings</a>
-        <a href="/logout?session=${session.id}">Logout</a>
       </div>
     </nav>` : '';
   
@@ -96,6 +96,16 @@ button:hover { background: var(--btn-bg-hover); color: var(--btn-text-hover); }
 .status-waiting { background: var(--status-waiting); color: var(--bg); }
 .status-done { background: var(--status-done); color: var(--bg); }
 .status-wont-do { background: var(--status-wont-do); color: var(--bg); }
+.defer-btn { background: transparent; border: 1px solid var(--border); padding: 2px 6px; font-size: 12px; cursor: pointer; opacity: 0.6; }
+.defer-btn:hover { opacity: 1; border-color: var(--link); }
+.defer-form { display: contents; }
+.status-select { padding: 2px 8px; font-size: 11px; text-transform: uppercase; border-radius: 2px; cursor: pointer; border: none; appearance: none; -webkit-appearance: none; }
+.status-select:focus { outline: none; }
+.status-select.status-todo { background: var(--status-todo); color: var(--bg); }
+.status-select.status-in-progress { background: var(--status-in-progress); color: var(--bg); }
+.status-select.status-waiting { background: var(--status-waiting); color: var(--bg); }
+.status-select.status-done { background: var(--status-done); color: var(--bg); }
+.status-select.status-wont-do { background: var(--status-wont-do); color: var(--bg); }
 .card { background: var(--card-bg); border: 1px solid var(--border); padding: 15px; margin: 10px 0; }
 .task-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-bottom: 1px solid var(--border); }
 .task-item:last-child { border-bottom: none; }
@@ -168,18 +178,35 @@ function taskAddForm(sessionId, projects, defaultDue = '') {
 }
 
 // Task list component
-function taskList(tasks, sessionId, showDue = true) {
+function taskList(tasks, sessionId, showDue = true, showDefer = true) {
   if (!tasks || tasks.length === 0) return '<div class="empty-state">No tasks</div>';
-  
+
+  const statusOptions = [
+    ['todo', 'ToDo'],
+    ['in_progress', 'In Progress'],
+    ['waiting', 'Waiting'],
+    ['done', 'Done'],
+    ['wont_do', "Won't Do"]
+  ];
+
   return tasks.map(task => {
     const isDone = task.status === 'done';
     const isOverdue = task.due && isPast(task.due) && !isDone;
-    
+
+    const statusSelectOptions = statusOptions
+      .map(([v, l]) => `<option value="${v}" ${task.status === v ? 'selected' : ''}>${l}</option>`)
+      .join('');
+
     return `
       <div class="task-item">
         <form method="POST" action="/app/task/${task.id}/toggle?session=${sessionId}" style="display: contents;">
           <input type="checkbox" class="task-checkbox" ${isDone ? 'checked' : ''} onchange="this.form.submit()">
         </form>
+        ${showDefer && !isDone ? `
+        <form method="POST" action="/app/task/${task.id}/defer?session=${sessionId}" class="defer-form">
+          <button type="button" class="defer-btn" title="棚上げ" onclick="this.nextElementSibling.style.display='inline-block';this.style.display='none';">⏸</button>
+          <input type="date" name="defer_date" style="display:none; width: 130px;" onchange="this.form.submit()" onblur="if(!this.value){this.style.display='none';this.previousElementSibling.style.display='inline-block';}">
+        </form>` : ''}
         <div style="flex: 1;">
           <a href="/app/task/${task.id}?session=${sessionId}" class="task-name ${isDone ? 'done' : ''}">${task.name}</a>
           <div class="task-meta">
@@ -188,7 +215,11 @@ function taskList(tasks, sessionId, showDue = true) {
             ${showDue && task.due ? `<span class="task-due ${isOverdue ? 'overdue' : ''}">${task.due}</span>` : ''}
           </div>
         </div>
-        <span class="status-badge ${getStatusClass(task.status)}">${task.status.replace('_', ' ')}</span>
+        <form method="POST" action="/app/task/${task.id}/status?session=${sessionId}" style="display: contents;">
+          <select class="status-select ${getStatusClass(task.status)}" name="status" onchange="this.form.submit()">
+            ${statusSelectOptions}
+          </select>
+        </form>
       </div>`;
   }).join('');
 }
@@ -276,6 +307,40 @@ app.post('/login', async (req, res) => {
 app.get('/logout', (req, res) => {
   if (req.query.session) delete sessions[req.query.session];
   res.redirect('/');
+});
+
+// PROJECT - プロジェクト別タスク一覧
+app.get('/app/projects', async (req, res) => {
+  const session = getSession(req);
+  if (!session) return res.redirect('/login');
+
+  const theme = localData.users[session.userId]?.theme || 'night';
+  const allTasks = getLocalTasks(session.userId);
+  const projects = getLocalProjects(session.userId);
+
+  // Group tasks by project
+  const tasksByProject = {};
+  projects.forEach(p => { tasksByProject[p] = []; });
+  tasksByProject['(No Project)'] = [];
+
+  allTasks.filter(t => t.status !== 'done' && t.status !== 'wont_do').forEach(task => {
+    const projectKey = task.project || '(No Project)';
+    if (!tasksByProject[projectKey]) tasksByProject[projectKey] = [];
+    tasksByProject[projectKey].push(task);
+  });
+
+  const projectsHtml = Object.entries(tasksByProject)
+    .filter(([_, tasks]) => tasks.length > 0)
+    .map(([project, tasks]) => `
+      <h3 class="mt-20">${project} <span class="count-badge">${tasks.length}</span></h3>
+      <div class="card">${taskList(tasks, session.id)}</div>
+    `).join('');
+
+  res.send(htmlTemplate('PROJECT', `
+    <h1>PROJECT</h1>
+    <p class="text-secondary">プロジェクト別タスク一覧</p>
+    ${projectsHtml || '<div class="empty-state mt-20">No active tasks</div>'}
+  `, session, theme));
 });
 
 // INBOX
@@ -409,6 +474,51 @@ app.post('/app/task/:id/toggle', async (req, res) => {
   res.redirect(req.get('Referer') || `/app/now?session=${session.id}`);
 });
 
+// Defer task (棚上げ) - change due date
+app.post('/app/task/:id/defer', async (req, res) => {
+  const session = getSession(req);
+  if (!session) return res.redirect('/login');
+
+  const { defer_date } = req.body;
+  const tasks = getLocalTasks(session.userId);
+  const task = tasks.find(t => t.id === req.params.id);
+
+  if (task && defer_date) {
+    task.history.push({ action: 'due_change', type: 'defer', from: task.due, to: defer_date, timestamp: new Date().toISOString() });
+    task.due = defer_date;
+    task.updatedAt = new Date().toISOString();
+    saveLocalTask(session.userId, task);
+    markdownSync.syncToMarkdown(tasks);
+  }
+
+  res.redirect(req.get('Referer') || `/app/now?session=${session.id}`);
+});
+
+// Change task status
+app.post('/app/task/:id/status', async (req, res) => {
+  const session = getSession(req);
+  if (!session) return res.redirect('/login');
+
+  const { status } = req.body;
+  const tasks = getLocalTasks(session.userId);
+  const task = tasks.find(t => t.id === req.params.id);
+
+  if (task && status) {
+    task.history.push({ action: 'status_change', from: task.status, to: status, timestamp: new Date().toISOString() });
+    if (status === 'done') {
+      task.completedAt = new Date().toISOString();
+    } else if (task.status === 'done') {
+      task.completedAt = null;
+    }
+    task.status = status;
+    task.updatedAt = new Date().toISOString();
+    saveLocalTask(session.userId, task);
+    markdownSync.syncToMarkdown(tasks);
+  }
+
+  res.redirect(req.get('Referer') || `/app/now?session=${session.id}`);
+});
+
 // Task detail
 app.get('/app/task/:id', async (req, res) => {
   const session = getSession(req);
@@ -534,6 +644,10 @@ app.get('/app/settings', async (req, res) => {
     <div class="card">
       <p class="text-secondary text-small">タスクデータをMarkdownファイルとして出力します（Cursor連携用）</p>
       <a href="/app/sync?session=${session.id}"><button class="mt-10">Sync Now</button></a>
+    </div>
+    <h3 class="mt-20">Account</h3>
+    <div class="card">
+      <a href="/logout?session=${session.id}"><button style="border-color: var(--alert); color: var(--alert);">Logout</button></a>
     </div>
   `, session, theme));
 });

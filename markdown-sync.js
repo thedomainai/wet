@@ -67,7 +67,7 @@ function generateNowMd(tasks) {
   const today = new Date().toISOString().split('T')[0];
   const todayTasks = tasks.filter(t => t.due === today && t.status !== 'done' && t.status !== 'wont_do');
   const overdueTasks = tasks.filter(t => t.due && t.due < today && t.status !== 'done' && t.status !== 'wont_do');
-  const doneTodayTasks = tasks.filter(t => t.completed_at && t.completed_at.startsWith(today));
+  const doneTodayTasks = tasks.filter(t => t.completedAt && t.completedAt.startsWith(today));
   
   let content = `# Now\n\n`;
   content += `<!-- 今日やること: ${today} -->\n\n`;
@@ -140,8 +140,8 @@ function generateTaskMd(task) {
     due: task.due,
     project: task.project,
     estimate: task.estimate,
-    created_at: task.created_at,
-    updated_at: task.updated_at,
+    created_at: task.createdAt,
+    updated_at: task.updatedAt,
   });
   
   let content = `${frontmatter}\n\n`;
@@ -151,10 +151,10 @@ function generateTaskMd(task) {
   
   if (task.history && task.history.length > 0) {
     task.history.forEach(h => {
-      const date = h.created_at.split('T')[0];
+      const date = h.timestamp ? h.timestamp.split('T')[0] : 'unknown';
       let entry = `- ${date}: ${h.action}`;
-      if (h.action_type) entry += ` (${h.action_type})`;
-      if (h.old_value || h.new_value) entry += `: ${h.old_value || 'null'} → ${h.new_value || 'null'}`;
+      if (h.type) entry += ` (${h.type})`;
+      if (h.from || h.to) entry += `: ${h.from || 'null'} → ${h.to || 'null'}`;
       content += entry + '\n';
     });
   }
