@@ -56,238 +56,828 @@ function htmlTemplate(title, content, session = null, theme = 'night', bottomNav
   const bottom = bottomNav || '';
   
   return `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>${title}</title>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Parisienne&family=Playfair+Display:wght@400;500;600&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root { 
+:root {
   ${cssVars}
-  --font-sans: 'Roboto', sans-serif;
-  --font-serif: 'Playfair Display', serif;
-  --font-script: 'Parisienne', cursive;
+  --font-mono: 'Roboto Mono', monospace;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --shadow-subtle: 0 1px 2px rgba(0,0,0,0.1);
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: var(--font-sans); background: var(--bg); color: var(--text-primary); padding: 20px; padding-bottom: 80px; line-height: 1.6; min-height: 100vh; font-weight: 300; }
-nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; margin-bottom: 20px; }
-.nav-title { font-family: var(--font-script); font-size: 22px; color: var(--text-primary); text-decoration: none; }
-.nav-settings { color: var(--text-secondary); font-size: 13px; }
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg); border-top: 1px solid var(--border); padding: 12px 20px; display: flex; justify-content: center; gap: 20px; font-size: 13px; }
-.bottom-nav a { color: var(--text-secondary); text-decoration: none; }
-.bottom-nav a:hover, .bottom-nav a.active { color: var(--text-primary); }
-.bottom-nav .count { opacity: 0.6; }
-a { color: var(--link); text-decoration: none; }
+body {
+  font-family: var(--font-mono);
+  background: var(--bg);
+  color: var(--text-primary);
+  line-height: 1.5;
+  min-height: 100vh;
+  font-weight: 400;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.container { max-width: 640px; margin: 0 auto; padding: 24px 20px; }
+
+/* Navigation */
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0 32px;
+}
+.nav-title {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+.nav-title:hover { color: var(--text-primary); }
+.nav-settings {
+  color: var(--text-secondary);
+  font-size: 13px;
+  opacity: 0.7;
+  transition: opacity var(--transition);
+}
+.nav-settings:hover { opacity: 1; }
+
+/* Tab Navigation - NOW as hero */
+.tab-nav {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+.tab-nav a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+.tab-nav a:hover { color: var(--text-primary); }
+.tab-nav a.home {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  line-height: 1;
+}
+.tab-nav .sub-nav {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 400;
+}
+.tab-nav .sub-nav a {
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+.tab-nav .sub-nav a:hover {
+  opacity: 1;
+  background: var(--card-bg);
+}
+.tab-nav .sub-nav a.active {
+  color: var(--text-primary);
+  background: var(--card-bg);
+  opacity: 1;
+}
+.tab-nav .count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  opacity: 0.6;
+  margin-left: 2px;
+}
+
+/* Links */
+a { color: var(--text-primary); text-decoration: none; }
 a:hover { color: var(--link-hover); }
-h1 { margin: 20px 0; font-family: var(--font-serif); font-weight: 500; font-size: 28px; }
-h2 { margin: 15px 0; font-family: var(--font-serif); font-weight: 500; font-size: 20px; }
-h3 { margin: 12px 0; color: var(--text-secondary); font-weight: 400; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
-input, textarea, select { font-family: var(--font-sans); background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border); padding: 8px 12px; margin: 5px 0; font-size: 14px; }
-input:focus, textarea:focus, select:focus { outline: none; border-color: var(--border-hover); }
-button { font-family: var(--font-sans); background: var(--btn-bg); color: var(--btn-text); border: 1px solid var(--border); padding: 8px 16px; cursor: pointer; font-size: 14px; }
-button:hover { background: var(--btn-bg-hover); color: var(--btn-text-hover); }
-.status-badge { display: inline-block; padding: 2px 8px; font-size: 11px; text-transform: uppercase; border-radius: 2px; }
-.card { background: var(--card-bg); border: 1px solid var(--border); padding: 15px; margin: 10px 0; }
-.task-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
-.task-checkbox { width: 18px; height: 18px; accent-color: var(--status-done); cursor: pointer; flex-shrink: 0; }
-.task-name { flex: 1; font-size: 15px; color: var(--text-primary); text-decoration: none; }
-.task-name:hover { color: var(--link); }
-.task-name.done { text-decoration: line-through; color: var(--text-secondary); opacity: 0.6; }
-.task-date { font-size: 12px; color: var(--text-secondary); flex-shrink: 0; }
-.task-date.overdue { color: var(--alert); }
-.date-group { margin-top: 24px; }
+
+/* Typography */
+h1 { font-weight: 600; font-size: 24px; letter-spacing: -0.02em; margin: 16px 0; }
+h2 { font-weight: 500; font-size: 18px; letter-spacing: -0.01em; margin: 12px 0; }
+h3 { color: var(--text-secondary); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin: 8px 0; }
+
+/* Form Elements */
+input, textarea, select {
+  font-family: var(--font-mono);
+  background: transparent;
+  color: var(--text-primary);
+  border: none;
+  padding: 8px 0;
+  font-size: 13px;
+  transition: color var(--transition);
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+}
+input::placeholder, textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.4;
+}
+button {
+  font-family: var(--font-mono);
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all var(--transition);
+}
+button:hover {
+  background: var(--card-bg);
+  border-color: var(--text-secondary);
+}
+
+/* Task List */
+.task-list { margin: 0; }
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0;
+  transition: background var(--transition);
+}
+
+/* Custom Checkbox */
+.task-checkbox-wrapper {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+.task-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all var(--transition);
+  background: transparent;
+  margin: 0;
+}
+.task-checkbox:hover {
+  border-color: var(--text-primary);
+  background: rgba(255,255,255,0.03);
+}
+.task-checkbox:checked {
+  background: var(--text-secondary);
+  border-color: var(--text-secondary);
+}
+.task-checkbox:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  color: var(--bg);
+  font-weight: 600;
+}
+
+/* Task Content */
+.task-content { flex: 1; min-width: 0; }
+.task-name {
+  display: block;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: color var(--transition);
+  line-height: 1.4;
+}
+.task-name:hover { color: var(--text-secondary); }
+.task-name.done {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+/* Task Meta */
+.task-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+  min-height: 28px;
+}
+.task-date {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+.task-date.overdue {
+  color: var(--alert);
+  opacity: 1;
+}
+
+/* Task Actions */
+.task-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+.task-item:hover .task-actions { opacity: 1; }
+.task-action-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+}
+.task-action-btn:hover {
+  background: var(--card-bg);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+.bring-forward-form { position: relative; display: inline-flex; }
+.bring-forward-form input[type="date"] {
+  position: absolute;
+  opacity: 0;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+}
+.bring-forward-form input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+/* View Switcher */
+.view-switcher {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  font-size: 12px;
+}
+.view-switcher a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  opacity: 0.5;
+  transition: all var(--transition);
+}
+.view-switcher a:hover {
+  opacity: 0.8;
+}
+.view-switcher a.active {
+  color: var(--text-primary);
+  opacity: 1;
+}
+
+/* Date Groups */
+.date-group { margin-top: 32px; }
 .date-group:first-child { margin-top: 0; }
-.date-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 8px; }
-.add-task-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--border); padding: 12px 0; font-size: 15px; color: var(--text-primary); }
-.add-task-input:focus { outline: none; border-color: var(--text-secondary); }
-.add-task-input::placeholder { color: var(--text-secondary); opacity: 0.6; }
-.done-section { margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border); opacity: 0.5; }
-.done-section:hover { opacity: 0.8; }
+.date-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+
+/* Add Task Form */
+.add-task-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 40px;
+  font-size: 13px;
+}
+.add-task-prompt {
+  color: var(--text-secondary);
+  user-select: none;
+}
+.add-task-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 8px 0;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.add-task-input:focus {
+  outline: none;
+}
+.add-task-input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.4;
+}
+.add-task-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.add-task-date,
+.add-task-project {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 0;
+  font-size: 12px;
+  transition: color var(--transition);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.add-task-date:hover,
+.add-task-project:hover {
+  color: var(--text-primary);
+}
+.add-task-date:focus,
+.add-task-project:focus {
+  outline: none;
+  color: var(--text-primary);
+}
+
+/* Done Section */
+.done-section {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.done-section .date-label { opacity: 0.4; }
+.done-section .task-item { opacity: 0.4; }
+.done-section:hover .task-item { opacity: 0.6; }
+
+/* Empty State */
+.empty-state {
+  color: var(--text-secondary);
+  padding: 64px 24px;
+  text-align: center;
+  opacity: 0.5;
+  font-size: 14px;
+}
+
+/* Utility Classes */
+.card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin: 12px 0; }
+.status-badge { display: inline-block; padding: 2px 8px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; border-radius: var(--radius-sm); }
+/* CLI Add Form */
+.cli-add-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 32px;
+  font-size: 13px;
+}
+.cli-prompt {
+  color: var(--text-secondary);
+  user-select: none;
+}
+.cli-cmd {
+  color: var(--text-secondary);
+}
+.cli-inline-input {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  padding: 8px 0;
+  font-size: 13px;
+  flex: 1;
+}
+.cli-inline-input:focus {
+  outline: none;
+}
+.cli-inline-input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.4;
+}
+.project-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.project-delete { color: var(--text-secondary); font-size: 12px; margin-left: 8px; opacity: 0.5; transition: all var(--transition); }
+.project-delete:hover { color: var(--alert); opacity: 1; }
 .error { color: var(--alert); }
-.form-group { margin: 15px 0; }
-.form-group label { display: block; margin-bottom: 5px; color: var(--text-secondary); font-size: 12px; text-transform: uppercase; }
-.form-row { display: flex; gap: 10px; align-items: flex-end; }
+.form-group { margin: 16px 0; }
+.form-group label { display: block; margin-bottom: 6px; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+.form-row { display: flex; gap: 12px; align-items: flex-end; }
 .flex { display: flex; } .gap-10 { gap: 10px; } .gap-20 { gap: 20px; }
 .mt-10 { margin-top: 10px; } .mt-20 { margin-top: 20px; }
 .text-secondary { color: var(--text-secondary); }
 .text-small { font-size: 12px; }
 details summary { cursor: pointer; color: var(--text-secondary); font-size: 12px; }
-.optional-fields { padding: 10px; background: var(--card-bg); border: 1px solid var(--border); margin-top: 5px; }
-.count-badge { background: var(--sub); padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-left: 5px; }
-.empty-state { color: var(--text-secondary); padding: 40px; text-align: center; }
-</style></head><body>${nav}${content}${bottom}</body></html>`;
+.optional-fields { padding: 12px; background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-top: 8px; }
+.count-badge { background: var(--card-bg); padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 4px; }
+
+/* CLI Style */
+.cli-container {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 48px 24px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.cli-header {
+  margin-bottom: 32px;
+}
+.cli-title {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.cli-welcome {
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+.cli-desc {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.cli-form {
+  margin-top: 32px;
+}
+.cli-line {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+.cli-prompt {
+  color: var(--text-secondary);
+  margin-right: 12px;
+  user-select: none;
+}
+.cli-label {
+  color: var(--text-secondary);
+  min-width: 100px;
+}
+.cli-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 13px;
+  padding: 8px 0;
+  margin-left: 8px;
+}
+.cli-input:focus {
+  outline: none;
+}
+.cli-input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.4;
+}
+.cli-actions {
+  margin-top: 32px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.cli-submit {
+  font-family: var(--font-mono);
+  background: var(--text-primary);
+  color: var(--bg);
+  border: none;
+  padding: 10px 24px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity var(--transition);
+}
+.cli-submit:hover {
+  opacity: 0.8;
+}
+.cli-link {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.cli-link:hover {
+  color: var(--text-primary);
+}
+.cli-error {
+  font-family: var(--font-mono);
+  color: var(--alert);
+  font-size: 13px;
+  margin-bottom: 24px;
+  padding: 12px;
+  border: 1px solid var(--alert);
+  opacity: 0.9;
+}
+.cli-success {
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  font-size: 13px;
+}
+.cli-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 16px;
+  background: var(--text-primary);
+  margin-left: 2px;
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+</style></head><body><div class="container">${nav}${content}${bottom}</div></body></html>`;
 }
 
-// Task form component
-function taskAddForm(sessionId, projects, defaultDue = '') {
-  const projectOptions = projects.map(p => `<option value="${p.id || p}">${p.name || p}</option>`).join('');
+// Minimal task add form with CLI style
+function minimalTaskAdd(sessionId, projects = [], defaultDate = '') {
+  const projectOptions = projects.map(p => `<option value="${p}">${p}</option>`).join('');
+  const dateDisplay = defaultDate || 'date';
   return `
-    <form method="POST" action="/app/task/add?session=${sessionId}" class="card">
-      <div class="form-row">
-        <div style="flex: 1;">
-          <label class="text-secondary text-small">TASK NAME *</label>
-          <input type="text" name="name" placeholder="タスク名を入力" required style="width: 100%;">
-        </div>
-        <div>
-          <label class="text-secondary text-small">DUE DATE</label>
-          <input type="date" name="due" value="${defaultDue}" style="width: 150px;">
-        </div>
-        <button type="submit">Add</button>
+    <form method="POST" action="/app/task/add?session=${sessionId}" class="add-task-form">
+      <span class="add-task-prompt">&gt;</span>
+      <input type="text" name="name" class="add-task-input" placeholder="new task" required>
+      <div class="add-task-meta">
+        <label class="add-task-field">
+          <input type="date" name="due" value="${defaultDate}" class="add-task-date">
+        </label>
+        <label class="add-task-field">
+          <select name="project" class="add-task-project">
+            <option value="">--project</option>
+            ${projectOptions}
+          </select>
+        </label>
       </div>
-      <details>
-        <summary>More options</summary>
-        <div class="optional-fields">
-          <div class="form-row">
-            <div>
-              <label class="text-secondary text-small">PROJECT</label>
-              <select name="project" style="width: 150px;"><option value="">None</option>${projectOptions}</select>
-            </div>
-            <div>
-              <label class="text-secondary text-small">STATUS</label>
-              <select name="status" style="width: 130px;">
-                <option value="todo">ToDo</option>
-                <option value="in_progress">In Progress</option>
-                <option value="waiting">Waiting</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-secondary text-small">ESTIMATE</label>
-              <select name="estimate" style="width: 100px;">
-                <option value="">-</option>
-                <option value="0.5">0.5h</option><option value="1">1h</option>
-                <option value="1.5">1.5h</option><option value="2">2h</option>
-                <option value="3">3h</option><option value="4">4h</option><option value="8">8h</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </details>
     </form>`;
 }
 
-// Task list component
-function taskList(tasks, sessionId, showDue = true, showDefer = true) {
-  if (!tasks || tasks.length === 0) return '<div class="empty-state">No tasks</div>';
+// Natural language date parser
+function parseNaturalDate(text) {
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const lowerText = text.toLowerCase();
 
-  const statusOptions = [
-    ['todo', 'ToDo'],
-    ['in_progress', 'In Progress'],
-    ['waiting', 'Waiting'],
-    ['done', 'Done'],
-    ['wont_do', "Won't Do"]
-  ];
+  // English day names
+  const dayMap = {
+    'sunday': 0, 'monday': 1, 'tuesday': 2, 'wednesday': 3, 'thursday': 4, 'friday': 5, 'saturday': 6,
+    'sun': 0, 'mon': 1, 'tue': 2, 'wed': 3, 'thu': 4, 'fri': 5, 'sat': 6
+  };
 
-  return tasks.map(task => {
-    const isDone = task.status === 'done';
-    const isOverdue = task.due && isPast(task.due) && !isDone;
+  // Check for relative dates
+  if (lowerText.includes('today')) {
+    return { date: getToday(), clean: text.replace(/today/gi, '').trim() };
+  }
+  if (lowerText.includes('tomorrow')) {
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return { date: tomorrow.toISOString().split('T')[0], clean: text.replace(/tomorrow/gi, '').trim() };
+  }
 
-    const statusSelectOptions = statusOptions
-      .map(([v, l]) => `<option value="${v}" ${task.status === v ? 'selected' : ''}>${l}</option>`)
-      .join('');
+  // Check for day of week
+  for (const [dayName, dayNum] of Object.entries(dayMap)) {
+    if (lowerText.includes(dayName)) {
+      let daysUntil = dayNum - dayOfWeek;
+      if (daysUntil <= 0) daysUntil += 7;
+      const targetDate = new Date(today);
+      targetDate.setDate(targetDate.getDate() + daysUntil);
+      return { date: targetDate.toISOString().split('T')[0], clean: text.replace(new RegExp(dayName, 'gi'), '').trim() };
+    }
+  }
 
-    return `
-      <div class="task-item">
-        <form method="POST" action="/app/task/${task.id}/toggle?session=${sessionId}" style="display: contents;">
-          <input type="checkbox" class="task-checkbox" ${isDone ? 'checked' : ''} onchange="this.form.submit()">
-        </form>
-        ${showDefer && !isDone ? `
-        <form method="POST" action="/app/task/${task.id}/defer?session=${sessionId}" class="defer-form">
-          <button type="button" class="defer-btn" title="棚上げ" onclick="this.nextElementSibling.style.display='inline-block';this.style.display='none';">⏸</button>
-          <input type="date" name="defer_date" style="display:none; width: 130px;" onchange="this.form.submit()" onblur="if(!this.value){this.style.display='none';this.previousElementSibling.style.display='inline-block';}">
-        </form>` : ''}
-        <div style="flex: 1;">
-          <a href="/app/task/${task.id}?session=${sessionId}" class="task-name ${isDone ? 'done' : ''}">${task.name}</a>
-          <div class="task-meta">
-            ${task.project ? `<span>@${task.project}</span>` : ''}
-            ${task.estimate ? `<span>${task.estimate}h</span>` : ''}
-            ${showDue && task.due ? `<span class="task-due ${isOverdue ? 'overdue' : ''}">${task.due}</span>` : ''}
-          </div>
+  // Check for MM/DD or M/D format
+  const dateMatch = text.match(/(\d{1,2})\/(\d{1,2})/);
+  if (dateMatch) {
+    const month = parseInt(dateMatch[1]) - 1;
+    const day = parseInt(dateMatch[2]);
+    const targetDate = new Date(today.getFullYear(), month, day);
+    if (targetDate < today) targetDate.setFullYear(targetDate.getFullYear() + 1);
+    return { date: targetDate.toISOString().split('T')[0], clean: text.replace(/\d{1,2}\/\d{1,2}/, '').trim() };
+  }
+
+  return { date: null, clean: text };
+}
+
+// Parse @project from text
+function parseProject(text, projects) {
+  const match = text.match(/@(\S+)/);
+  if (match) {
+    const projectName = match[1];
+    // Check if project exists or create reference
+    return { project: projectName, clean: text.replace(/@\S+/, '').trim() };
+  }
+  return { project: null, clean: text };
+}
+
+// Minimal task item
+function minimalTaskItem(task, sessionId) {
+  const isDone = task.status === 'done';
+  const isOverdue = task.due && isPast(task.due) && !isDone;
+  const dateDisplay = task.due ? formatShortDate(task.due) : '';
+
+  // Bring forward action (only show for non-done tasks)
+  const bringForwardAction = !isDone ? `
+    <form method="POST" action="/app/task/${task.id}/bring-forward?session=${sessionId}" class="bring-forward-form">
+      <button type="button" class="task-action-btn" title="Bring forward">↑</button>
+      <input type="date" name="new_date" onchange="this.form.submit()">
+    </form>` : '';
+
+  return `
+    <div class="task-item">
+      <form method="POST" action="/app/task/${task.id}/toggle?session=${sessionId}" class="task-checkbox-wrapper">
+        <input type="checkbox" class="task-checkbox" ${isDone ? 'checked' : ''} onchange="this.form.submit()">
+      </form>
+      <div class="task-content">
+        <a href="/app/task/${task.id}?session=${sessionId}" class="task-name ${isDone ? 'done' : ''}">${task.name}</a>
+      </div>
+      <div class="task-meta">
+        ${dateDisplay ? `<span class="task-date ${isOverdue ? 'overdue' : ''}">${dateDisplay}</span>` : ''}
+        <div class="task-actions">
+          ${bringForwardAction}
         </div>
-        <form method="POST" action="/app/task/${task.id}/status?session=${sessionId}" style="display: contents;">
-          <select class="status-select ${getStatusClass(task.status)}" name="status" onchange="this.form.submit()">
-            ${statusSelectOptions}
-          </select>
-        </form>
-      </div>`;
-  }).join('');
+      </div>
+    </div>`;
+}
+
+// Format date as short (1/5, tomorrow, etc)
+function formatShortDate(dateStr) {
+  const today = getToday();
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+  if (dateStr === today) return '';
+  if (dateStr === tomorrowStr) return 'tomorrow';
+
+  const d = new Date(dateStr);
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+// Format date label
+function formatDateLabel(dateStr) {
+  const today = getToday();
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+  if (dateStr === today) return 'TODAY';
+  if (dateStr === tomorrowStr) return 'TOMORROW';
+  if (dateStr < today) return 'OVERDUE';
+
+  const d = new Date(dateStr);
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  return `${d.getMonth() + 1}/${d.getDate()} (${days[d.getDay()]})`;
+}
+
+// Tab navigation
+function tabNav(sessionId, inboxCount, projectCount, current = 'now') {
+  return `
+    <div class="tab-nav">
+      <a href="/app?session=${sessionId}" class="home ${current === 'now' ? 'active' : ''}">NOW</a>
+      <div class="sub-nav">
+        <a href="/app/inbox?session=${sessionId}" class="${current === 'inbox' ? 'active' : ''}">inbox${inboxCount > 0 ? ` <span class="count">(${inboxCount})</span>` : ''}</a>
+        <a href="/app/projects?session=${sessionId}" class="${current === 'projects' ? 'active' : ''}">projects${projectCount > 0 ? ` <span class="count">(${projectCount})</span>` : ''}</a>
+      </div>
+    </div>`;
+}
+
+// Helper to get nav counts
+function getNavCounts(userId) {
+  const tasks = getLocalTasks(userId);
+  const projects = getLocalProjects(userId);
+  // inboxCount now shows all active tasks (master DB)
+  const inboxCount = tasks.filter(t => t.status !== 'done' && t.status !== 'wont_do').length;
+  const projectCount = projects.length;
+  return { inboxCount, projectCount };
 }
 
 // Routes
 app.get('/', (req, res) => {
   res.send(htmlTemplate('AGI Task Manager', `
-    <div style="max-width: 400px; margin: 100px auto; text-align: center;">
-      <h1 style="font-size: 48px; margin-bottom: 10px; font-family: var(--font-script);">AGI Task Manager</h1>
-      <p class="text-secondary" style="margin-bottom: 40px;">タスク管理システム for AGI時代</p>
-      <div class="flex gap-10" style="justify-content: center;">
-        <a href="/login"><button>Login</button></a>
-        <a href="/signup"><button>Sign Up</button></a>
+    <div class="cli-container">
+      <div class="cli-header">
+        <div class="cli-title">$ agi-task-manager --version 1.0.0</div>
+        <div class="cli-welcome" style="font-size: 28px; margin-top: 16px;">Subtraction-first task management</div>
+        <div class="cli-desc" style="margin-top: 8px;">Task management for the AGI era</div>
       </div>
-    </div>`));
+      <div class="cli-form">
+        <div class="cli-line" style="margin-bottom: 16px;">
+          <span class="cli-prompt">&gt;</span>
+          <span style="color: var(--text-secondary);">Ready to start?</span>
+        </div>
+        <div class="cli-actions" style="margin-top: 24px;">
+          <a href="/signup"><button class="cli-submit">Get Started</button></a>
+          <a href="/login" class="cli-link">Login</a>
+        </div>
+      </div>
+    </div>`, null));
 });
 
 app.get('/signup', (req, res) => {
+  const error = req.query.error;
   res.send(htmlTemplate('Sign Up', `
-    <div style="max-width: 300px; margin: 80px auto;">
-      <h1>Sign Up</h1>
-      <form method="POST" action="/signup">
-        <div class="form-group"><label>Username</label><input type="text" name="username" required style="width: 100%;"></div>
-        <div class="form-group"><label>Password</label><input type="password" name="password" required style="width: 100%;"></div>
-        <button type="submit" style="width: 100%; margin-top: 10px;">Create Account</button>
+    <div class="cli-container">
+      <div class="cli-header">
+        <div class="cli-title">$ create-account</div>
+        <div class="cli-welcome">Create your account</div>
+        <div class="cli-desc">Enter your credentials to get started</div>
+      </div>
+      ${error ? `<div class="cli-error">error: ${error}</div>` : ''}
+      <form method="POST" action="/signup" class="cli-form">
+        <div class="cli-line">
+          <span class="cli-prompt">&gt;</span>
+          <span class="cli-label">username</span>
+          <input type="text" name="username" class="cli-input" placeholder="enter username" required autofocus>
+        </div>
+        <div class="cli-line">
+          <span class="cli-prompt">&gt;</span>
+          <span class="cli-label">password</span>
+          <input type="password" name="password" class="cli-input" placeholder="enter password" required>
+        </div>
+        <div class="cli-actions">
+          <button type="submit" class="cli-submit">Create Account</button>
+          <a href="/login" class="cli-link">Already have an account?</a>
+        </div>
       </form>
-      <p class="mt-20" style="text-align: center;"><a href="/">← Back</a></p>
-    </div>`));
+    </div>`, null));
 });
 
 app.post('/signup', async (req, res) => {
   const { username, password } = req.body;
-  
+
   // For development without Supabase
   if (!db.getSupabase()) {
     if (localData.users[username]) {
-      return res.send(htmlTemplate('Sign Up Error', `
-        <div style="max-width: 300px; margin: 80px auto; text-align: center;">
-          <h1>Sign Up</h1><p class="error">Username already exists</p>
-          <a href="/signup"><button class="mt-20">Try Again</button></a>
-        </div>`));
+      return res.redirect(`/signup?error=${encodeURIComponent('username already exists')}`);
     }
     localData.users[username] = { password, theme: 'night' };
     const sessionId = Math.random().toString(36).substring(7);
     sessions[sessionId] = { id: sessionId, username, userId: username };
-    return res.redirect(`/app/now?session=${sessionId}`);
+    return res.redirect(`/app?session=${sessionId}`);
   }
-  
+
   // TODO: Implement Supabase auth
   res.redirect('/login');
 });
 
 app.get('/login', (req, res) => {
+  const error = req.query.error;
   res.send(htmlTemplate('Login', `
-    <div style="max-width: 300px; margin: 80px auto;">
-      <h1>Login</h1>
-      <form method="POST" action="/login">
-        <div class="form-group"><label>Username</label><input type="text" name="username" required style="width: 100%;"></div>
-        <div class="form-group"><label>Password</label><input type="password" name="password" required style="width: 100%;"></div>
-        <button type="submit" style="width: 100%; margin-top: 10px;">Login</button>
+    <div class="cli-container">
+      <div class="cli-header">
+        <div class="cli-title">$ login</div>
+        <div class="cli-welcome">Welcome back</div>
+        <div class="cli-desc">Enter your credentials to continue</div>
+      </div>
+      ${error ? `<div class="cli-error">error: ${error}</div>` : ''}
+      <form method="POST" action="/login" class="cli-form">
+        <div class="cli-line">
+          <span class="cli-prompt">&gt;</span>
+          <span class="cli-label">username</span>
+          <input type="text" name="username" class="cli-input" placeholder="enter username" required autofocus>
+        </div>
+        <div class="cli-line">
+          <span class="cli-prompt">&gt;</span>
+          <span class="cli-label">password</span>
+          <input type="password" name="password" class="cli-input" placeholder="enter password" required>
+        </div>
+        <div class="cli-actions">
+          <button type="submit" class="cli-submit">Login</button>
+          <a href="/signup" class="cli-link">Create an account</a>
+        </div>
       </form>
-      <p class="mt-20" style="text-align: center;"><a href="/">← Back</a></p>
-    </div>`));
+    </div>`, null));
 });
 
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
-  
+
   if (!db.getSupabase()) {
     if (!localData.users[username] || localData.users[username].password !== password) {
-      return res.send(htmlTemplate('Login Error', `
-        <div style="max-width: 300px; margin: 80px auto; text-align: center;">
-          <h1>Login</h1><p class="error">Invalid credentials</p>
-          <a href="/login"><button class="mt-20">Try Again</button></a>
-        </div>`));
+      return res.redirect(`/login?error=${encodeURIComponent('invalid credentials')}`);
     }
     const sessionId = Math.random().toString(36).substring(7);
     sessions[sessionId] = { id: sessionId, username, userId: username };
-    return res.redirect(`/app/now?session=${sessionId}`);
+    return res.redirect(`/app?session=${sessionId}`);
   }
-  
+
   res.redirect('/');
 });
 
@@ -296,7 +886,70 @@ app.get('/logout', (req, res) => {
   res.redirect('/');
 });
 
-// PROJECT - プロジェクト別タスク一覧
+// Main app - NOW view with grouped tasks
+app.get('/app', async (req, res) => {
+  const session = getSession(req);
+  if (!session) return res.redirect('/login');
+
+  const theme = localData.users[session.userId]?.theme || 'night';
+  const allTasks = getLocalTasks(session.userId);
+  const projects = getLocalProjects(session.userId);
+  const today = getToday();
+  const { inboxCount, projectCount } = getNavCounts(session.userId);
+
+  // Get tasks for today and overdue (active tasks with due <= today)
+  const activeTasks = allTasks.filter(t =>
+    t.status !== 'done' && t.status !== 'wont_do' && t.due && t.due <= today
+  );
+
+  // Group by date
+  const grouped = {};
+  activeTasks.forEach(task => {
+    const label = formatDateLabel(task.due);
+    if (!grouped[label]) grouped[label] = [];
+    grouped[label].push(task);
+  });
+
+  // Build HTML for groups (OVERDUE first, then TODAY)
+  const order = ['OVERDUE', 'TODAY'];
+  let tasksHtml = '';
+  order.forEach(label => {
+    if (grouped[label] && grouped[label].length > 0) {
+      tasksHtml += `<div class="date-group"><div class="date-label">${label}</div>`;
+      grouped[label].forEach(task => {
+        tasksHtml += minimalTaskItem(task, session.id);
+      });
+      tasksHtml += '</div>';
+    }
+  });
+
+  // Done today
+  const doneToday = allTasks.filter(t => t.completedAt && t.completedAt.startsWith(today));
+  let doneHtml = '';
+  if (doneToday.length > 0) {
+    doneHtml = `<div class="done-section">`;
+    doneToday.forEach(task => {
+      doneHtml += minimalTaskItem(task, session.id);
+    });
+    doneHtml += '</div>';
+  }
+
+  const content = `
+    ${tabNav(session.id, inboxCount, projectCount, 'now')}
+    ${minimalTaskAdd(session.id, projects, today)}
+    ${tasksHtml || '<div class="empty-state">No tasks for today</div>'}
+    ${doneHtml}
+  `;
+
+  res.send(htmlTemplate('NOW', content, session, theme));
+});
+
+// Redirect /app/now to /app
+app.get('/app/now', (req, res) => {
+  res.redirect(`/app?session=${req.query.session}`);
+});
+
+// PROJECT - Tasks grouped by project
 app.get('/app/projects', async (req, res) => {
   const session = getSession(req);
   if (!session) return res.redirect('/login');
@@ -304,135 +957,205 @@ app.get('/app/projects', async (req, res) => {
   const theme = localData.users[session.userId]?.theme || 'night';
   const allTasks = getLocalTasks(session.userId);
   const projects = getLocalProjects(session.userId);
+  const { inboxCount, projectCount } = getNavCounts(session.userId);
 
   // Group tasks by project
   const tasksByProject = {};
   projects.forEach(p => { tasksByProject[p] = []; });
-  tasksByProject['(No Project)'] = [];
 
-  allTasks.filter(t => t.status !== 'done' && t.status !== 'wont_do').forEach(task => {
-    const projectKey = task.project || '(No Project)';
-    if (!tasksByProject[projectKey]) tasksByProject[projectKey] = [];
-    tasksByProject[projectKey].push(task);
+  allTasks.filter(t => t.status !== 'done' && t.status !== 'wont_do' && t.project).forEach(task => {
+    if (!tasksByProject[task.project]) tasksByProject[task.project] = [];
+    tasksByProject[task.project].push(task);
   });
 
-  const projectsHtml = Object.entries(tasksByProject)
-    .filter(([_, tasks]) => tasks.length > 0)
-    .map(([project, tasks]) => `
-      <h3 class="mt-20">${project} <span class="count-badge">${tasks.length}</span></h3>
-      <div class="card">${taskList(tasks, session.id)}</div>
-    `).join('');
+  // Project add form
+  const addForm = `
+    <form method="POST" action="/app/project/add?session=${session.id}" class="cli-add-form">
+      <span class="cli-prompt">&gt;</span>
+      <span class="cli-cmd">add-project</span>
+      <input type="text" name="name" class="cli-inline-input" placeholder="name" required>
+    </form>`;
 
-  res.send(htmlTemplate('PROJECT', `
-    <h1>PROJECT</h1>
-    <p class="text-secondary">プロジェクト別タスク一覧</p>
-    ${projectsHtml || '<div class="empty-state mt-20">No active tasks</div>'}
-  `, session, theme));
+  // Build projects HTML - show all projects including empty ones
+  let projectsHtml = '';
+  projects.forEach(project => {
+    const tasks = tasksByProject[project] || [];
+    const taskCount = tasks.length;
+    projectsHtml += `<div class="date-group">
+      <div class="project-header">
+        <span class="date-label">${project} ${taskCount > 0 ? `(${taskCount})` : ''}</span>
+        <a href="/app/project/delete/${encodeURIComponent(project)}?session=${session.id}" class="project-delete" onclick="return confirm('Delete project ${project}?')">delete</a>
+      </div>`;
+    tasks.forEach(task => {
+      projectsHtml += minimalTaskItem(task, session.id);
+    });
+    if (tasks.length === 0) {
+      projectsHtml += '<div class="text-secondary text-small" style="padding: 8px 0;">No tasks</div>';
+    }
+    projectsHtml += '</div>';
+  });
+
+  const content = `
+    ${tabNav(session.id, inboxCount, projectCount, 'projects')}
+    ${addForm}
+    ${projectsHtml || '<div class="empty-state">Add a project to get started</div>'}
+  `;
+  res.send(htmlTemplate('PROJECT', content, session, theme));
 });
 
-// INBOX
+// INBOX - Master task database with view switching
 app.get('/app/inbox', async (req, res) => {
   const session = getSession(req);
   if (!session) return res.redirect('/login');
-  
+
+  const view = req.query.view || 'date'; // 'date' or 'project'
   const theme = localData.users[session.userId]?.theme || 'night';
-  const tasks = getLocalTasks(session.userId).filter(t => !t.due && t.status !== 'done' && t.status !== 'wont_do');
+  const allTasks = getLocalTasks(session.userId).filter(t => t.status !== 'done' && t.status !== 'wont_do');
   const projects = getLocalProjects(session.userId);
-  
-  res.send(htmlTemplate('INBOX', `
-    <h1>INBOX <span class="count-badge">${tasks.length}</span></h1>
-    <p class="text-secondary">期日未設定のタスク</p>
-    ${taskAddForm(session.id, projects)}
-    <div class="mt-20">${taskList(tasks, session.id, false)}</div>
-  `, session, theme));
+  const { inboxCount, projectCount } = getNavCounts(session.userId);
+
+  // View switcher
+  const viewSwitcher = `
+    <div class="view-switcher">
+      <a href="/app/inbox?session=${session.id}&view=date" class="${view === 'date' ? 'active' : ''}">by date</a>
+      <a href="/app/inbox?session=${session.id}&view=project" class="${view === 'project' ? 'active' : ''}">by project</a>
+    </div>`;
+
+  let tasksHtml = '';
+
+  if (view === 'project') {
+    // Group by project
+    const tasksByProject = { '_none': [] };
+    projects.forEach(p => { tasksByProject[p] = []; });
+
+    allTasks.forEach(task => {
+      const proj = task.project || '_none';
+      if (!tasksByProject[proj]) tasksByProject[proj] = [];
+      tasksByProject[proj].push(task);
+    });
+
+    // No project first
+    if (tasksByProject['_none'].length > 0) {
+      tasksHtml += `<div class="date-group"><div class="date-label">No project</div>`;
+      tasksByProject['_none'].forEach(task => {
+        tasksHtml += minimalTaskItem(task, session.id);
+      });
+      tasksHtml += '</div>';
+    }
+
+    // Then by project
+    projects.forEach(project => {
+      const tasks = tasksByProject[project] || [];
+      if (tasks.length > 0) {
+        tasksHtml += `<div class="date-group"><div class="date-label">${project}</div>`;
+        tasks.forEach(task => {
+          tasksHtml += minimalTaskItem(task, session.id);
+        });
+        tasksHtml += '</div>';
+      }
+    });
+  } else {
+    // Group by date (default)
+    const noDate = allTasks.filter(t => !t.due);
+    const withDate = allTasks.filter(t => t.due).sort((a, b) => a.due.localeCompare(b.due));
+
+    // No date first
+    if (noDate.length > 0) {
+      tasksHtml += `<div class="date-group"><div class="date-label">No date</div>`;
+      noDate.forEach(task => {
+        tasksHtml += minimalTaskItem(task, session.id);
+      });
+      tasksHtml += '</div>';
+    }
+
+    // Group dated tasks
+    const grouped = {};
+    withDate.forEach(task => {
+      const label = formatDateLabel(task.due);
+      if (!grouped[label]) grouped[label] = [];
+      grouped[label].push(task);
+    });
+
+    Object.entries(grouped).forEach(([label, tasks]) => {
+      tasksHtml += `<div class="date-group"><div class="date-label">${label}</div>`;
+      tasks.forEach(task => {
+        tasksHtml += minimalTaskItem(task, session.id);
+      });
+      tasksHtml += '</div>';
+    });
+  }
+
+  const content = `
+    ${tabNav(session.id, inboxCount, projectCount, 'inbox')}
+    ${minimalTaskAdd(session.id, projects)}
+    ${viewSwitcher}
+    ${tasksHtml || '<div class="empty-state">No tasks</div>'}
+  `;
+
+  res.send(htmlTemplate('INBOX', content, session, theme));
 });
 
-// NOW
-app.get('/app/now', async (req, res) => {
-  const session = getSession(req);
-  if (!session) return res.redirect('/login');
-  
-  const theme = localData.users[session.userId]?.theme || 'night';
-  const allTasks = getLocalTasks(session.userId);
-  const projects = getLocalProjects(session.userId);
-  const today = getToday();
-  
-  const nowTasks = allTasks.filter(t => t.due === today && t.status !== 'done' && t.status !== 'wont_do');
-  const overdueTasks = allTasks.filter(t => t.due && isPast(t.due) && t.status !== 'done' && t.status !== 'wont_do');
-  const doneTodayTasks = allTasks.filter(t => t.completedAt && t.completedAt.startsWith(today));
-  
-  res.send(htmlTemplate('NOW', `
-    <h1>NOW <span class="count-badge">${nowTasks.length + overdueTasks.length}</span></h1>
-    <p class="text-secondary">今日やること（${today}）</p>
-    ${taskAddForm(session.id, projects, today)}
-    ${overdueTasks.length > 0 ? `<h3 class="mt-20">Overdue</h3><div class="card" style="border-color: var(--alert);">${taskList(overdueTasks, session.id)}</div>` : ''}
-    <h3 class="mt-20">Today</h3>
-    <div class="card">${taskList(nowTasks, session.id, false)}</div>
-    ${doneTodayTasks.length > 0 ? `<h3 class="mt-20">Done Today</h3><div class="card">${taskList(doneTodayTasks, session.id, false)}</div>` : ''}
-  `, session, theme));
+// Redirect /app/later to /app/inbox
+app.get('/app/later', (req, res) => {
+  res.redirect(`/app/inbox?session=${req.query.session}`);
 });
 
-// UPCOMING
-app.get('/app/upcoming', async (req, res) => {
-  const session = getSession(req);
-  if (!session) return res.redirect('/login');
-  
-  const theme = localData.users[session.userId]?.theme || 'night';
-  const allTasks = getLocalTasks(session.userId);
-  const projects = getLocalProjects(session.userId);
-  
-  const upcomingTasks = allTasks
-    .filter(t => t.due && isFuture(t.due) && t.status !== 'done' && t.status !== 'wont_do')
-    .sort((a, b) => a.due.localeCompare(b.due));
-  
-  const grouped = {};
-  upcomingTasks.forEach(t => {
-    if (!grouped[t.due]) grouped[t.due] = [];
-    grouped[t.due].push(t);
-  });
-  
-  const groupedHtml = Object.entries(grouped).map(([date, dateTasks]) => `
-    <h3 class="mt-20">${date}</h3>
-    <div class="card">${taskList(dateTasks, session.id, false)}</div>
-  `).join('');
-  
-  res.send(htmlTemplate('UPCOMING', `
-    <h1>UPCOMING <span class="count-badge">${upcomingTasks.length}</span></h1>
-    <p class="text-secondary">明日以降のタスク</p>
-    ${taskAddForm(session.id, projects)}
-    ${groupedHtml || '<div class="empty-state mt-20">No upcoming tasks</div>'}
-  `, session, theme));
+// Redirect old routes
+app.get('/app/upcoming', (req, res) => {
+  res.redirect(`/app/later?session=${req.query.session}`);
 });
 
-// Add task
+// Add task with natural language parsing
 app.post('/app/task/add', async (req, res) => {
   const session = getSession(req);
   if (!session) return res.redirect('/login');
-  
-  const { name, due, project, status, estimate } = req.body;
-  if (!name?.trim()) return res.redirect(req.get('Referer') || `/app/inbox?session=${session.id}`);
-  
+
+  let { name, due, project } = req.body;
+  if (!name?.trim()) return res.redirect(req.get('Referer') || `/app?session=${session.id}`);
+
+  // Parse natural language only if due/project not explicitly provided
+  let taskName = name.trim();
+  let taskDue = due || null;
+  let taskProject = project || null;
+
+  if (!taskDue) {
+    const dateResult = parseNaturalDate(taskName);
+    taskDue = dateResult.date;
+    taskName = dateResult.clean;
+  }
+
+  if (!taskProject) {
+    const projectResult = parseProject(taskName);
+    taskProject = projectResult.project;
+    taskName = projectResult.clean;
+  }
+
   const task = {
     id: Date.now().toString(),
-    name: name.trim(),
-    due: due || null,
-    project: project || null,
-    status: status || 'todo',
-    estimate: estimate ? parseFloat(estimate) : null,
+    name: taskName.trim(),
+    due: taskDue,
+    project: taskProject,
+    status: 'todo',
+    estimate: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     completedAt: null,
     history: [{ action: 'created', timestamp: new Date().toISOString() }]
   };
-  
+
+  // Auto-create project if it doesn't exist
+  if (taskProject) {
+    const projects = getLocalProjects(session.userId);
+    if (!projects.includes(taskProject)) {
+      if (!localData.projects[session.userId]) localData.projects[session.userId] = [];
+      localData.projects[session.userId].push(taskProject);
+    }
+  }
+
   saveLocalTask(session.userId, task);
-  
-  // Sync to markdown files
   markdownSync.syncToMarkdown(getLocalTasks(session.userId));
-  
-  if (!due) res.redirect(`/app/inbox?session=${session.id}`);
-  else if (isToday(due)) res.redirect(`/app/now?session=${session.id}`);
-  else res.redirect(`/app/upcoming?session=${session.id}`);
+
+  res.redirect(req.get('Referer') || `/app?session=${session.id}`);
 });
 
 // Toggle task
@@ -458,10 +1181,10 @@ app.post('/app/task/:id/toggle', async (req, res) => {
     markdownSync.syncToMarkdown(tasks);
   }
   
-  res.redirect(req.get('Referer') || `/app/now?session=${session.id}`);
+  res.redirect(req.get('Referer') || `/app?session=${session.id}`);
 });
 
-// Defer task (棚上げ) - change due date
+// Defer task - change due date to later
 app.post('/app/task/:id/defer', async (req, res) => {
   const session = getSession(req);
   if (!session) return res.redirect('/login');
@@ -478,7 +1201,27 @@ app.post('/app/task/:id/defer', async (req, res) => {
     markdownSync.syncToMarkdown(tasks);
   }
 
-  res.redirect(req.get('Referer') || `/app/now?session=${session.id}`);
+  res.redirect(req.get('Referer') || `/app?session=${session.id}`);
+});
+
+// Bring forward task - change due date to earlier
+app.post('/app/task/:id/bring-forward', async (req, res) => {
+  const session = getSession(req);
+  if (!session) return res.redirect('/login');
+
+  const { new_date } = req.body;
+  const tasks = getLocalTasks(session.userId);
+  const task = tasks.find(t => t.id === req.params.id);
+
+  if (task && new_date) {
+    task.history.push({ action: 'due_change', type: 'bring_forward', from: task.due, to: new_date, timestamp: new Date().toISOString() });
+    task.due = new_date;
+    task.updatedAt = new Date().toISOString();
+    saveLocalTask(session.userId, task);
+    markdownSync.syncToMarkdown(tasks);
+  }
+
+  res.redirect(req.get('Referer') || `/app?session=${session.id}`);
 });
 
 // Change task status
@@ -503,38 +1246,43 @@ app.post('/app/task/:id/status', async (req, res) => {
     markdownSync.syncToMarkdown(tasks);
   }
 
-  res.redirect(req.get('Referer') || `/app/now?session=${session.id}`);
+  res.redirect(req.get('Referer') || `/app?session=${session.id}`);
 });
 
 // Task detail
 app.get('/app/task/:id', async (req, res) => {
   const session = getSession(req);
   if (!session) return res.redirect('/login');
-  
+
   const theme = localData.users[session.userId]?.theme || 'night';
   const tasks = getLocalTasks(session.userId);
   const projects = getLocalProjects(session.userId);
   const task = tasks.find(t => t.id === req.params.id);
-  
-  if (!task) return res.redirect(`/app/now?session=${session.id}`);
-  
+
+  if (!task) return res.redirect(`/app?session=${session.id}`);
+
+  // Capture referrer for return navigation (exclude task detail pages)
+  const referer = req.get('Referer') || '';
+  const returnTo = referer && !referer.includes('/app/task/') ? referer : `/app?session=${session.id}`;
+
   const projectOptions = projects.map(p => `<option value="${p}" ${task.project === p ? 'selected' : ''}>${p}</option>`).join('');
   const statusOptions = [['todo','ToDo'],['in_progress','In Progress'],['waiting','Waiting'],['done','Done'],['wont_do',"Won't Do"]]
     .map(([v,l]) => `<option value="${v}" ${task.status === v ? 'selected' : ''}>${l}</option>`).join('');
   const estimateOptions = ['','0.5','1','1.5','2','3','4','8']
     .map(v => `<option value="${v}" ${(task.estimate?.toString() || '') === v ? 'selected' : ''}>${v ? v + 'h' : '-'}</option>`).join('');
-  
-  const historyHtml = task.history.map(h => 
+
+  const historyHtml = task.history.map(h =>
     `<li class="text-small text-secondary">${h.timestamp.split('T')[0]} - ${h.action}${h.type ? ` (${h.type})` : ''}</li>`
   ).join('');
-  
+
   res.send(htmlTemplate(`Task: ${task.name}`, `
     <h1>Edit Task</h1>
     <form method="POST" action="/app/task/${task.id}/update?session=${session.id}" class="card">
+      <input type="hidden" name="return_to" value="${returnTo}">
       <div class="form-group"><label>Task Name</label><input type="text" name="name" value="${task.name}" required style="width: 100%;"></div>
       <div class="form-row">
         <div class="form-group"><label>Due Date</label><input type="date" name="due" value="${task.due || ''}" style="width: 150px;"></div>
-        <div class="form-group"><label><input type="checkbox" name="is_defer" value="1" style="width: auto; margin-right: 5px;">Defer (棚上げ)</label></div>
+        <div class="form-group"><label><input type="checkbox" name="is_defer" value="1" style="width: auto; margin-right: 5px;">Mark as deferred</label></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label>Project</label><select name="project" style="width: 150px;"><option value="">None</option>${projectOptions}</select></div>
@@ -542,13 +1290,13 @@ app.get('/app/task/:id', async (req, res) => {
         <div class="form-group"><label>Estimate</label><select name="estimate" style="width: 100px;">${estimateOptions}</select></div>
       </div>
       <div class="flex gap-10 mt-10">
-        <button type="submit">Save Changes</button>
+        <button type="submit">Save</button>
+        <a href="${returnTo}"><button type="button">Cancel</button></a>
         <a href="/app/task/${task.id}/delete?session=${session.id}" onclick="return confirm('Delete?')"><button type="button" style="border-color: var(--alert); color: var(--alert);">Delete</button></a>
       </div>
     </form>
     <h3 class="mt-20">History</h3>
     <ul class="card" style="padding-left: 30px;">${historyHtml}</ul>
-    <p class="mt-20"><a href="javascript:history.back()">← Back</a></p>
   `, session, theme));
 });
 
@@ -556,11 +1304,11 @@ app.get('/app/task/:id', async (req, res) => {
 app.post('/app/task/:id/update', async (req, res) => {
   const session = getSession(req);
   if (!session) return res.redirect('/login');
-  
-  const { name, due, project, status, estimate, is_defer } = req.body;
+
+  const { name, due, project, status, estimate, is_defer, return_to } = req.body;
   const tasks = getLocalTasks(session.userId);
   const task = tasks.find(t => t.id === req.params.id);
-  
+
   if (task) {
     if (task.due !== (due || null)) {
       const changeType = is_defer ? 'defer' : 'edit';
@@ -571,19 +1319,20 @@ app.post('/app/task/:id/update', async (req, res) => {
       if (status === 'done') task.completedAt = new Date().toISOString();
       else if (task.status === 'done') task.completedAt = null;
     }
-    
+
     task.name = name;
     task.due = due || null;
     task.project = project || null;
     task.status = status;
     task.estimate = estimate ? parseFloat(estimate) : null;
     task.updatedAt = new Date().toISOString();
-    
+
     saveLocalTask(session.userId, task);
     markdownSync.syncToMarkdown(tasks);
   }
-  
-  res.redirect(`/app/task/${req.params.id}?session=${session.id}`);
+
+  // Return to previous page or default to /app
+  res.redirect(return_to || `/app?session=${session.id}`);
 });
 
 // Delete task
@@ -594,7 +1343,7 @@ app.get('/app/task/:id/delete', async (req, res) => {
   localData.tasks[session.userId] = getLocalTasks(session.userId).filter(t => t.id !== req.params.id);
   markdownSync.syncToMarkdown(localData.tasks[session.userId]);
   
-  res.redirect(`/app/now?session=${session.id}`);
+  res.redirect(`/app?session=${session.id}`);
 });
 
 // Settings
@@ -629,7 +1378,7 @@ app.get('/app/settings', async (req, res) => {
     </div>
     <h3 class="mt-20">Sync to Markdown</h3>
     <div class="card">
-      <p class="text-secondary text-small">タスクデータをMarkdownファイルとして出力します（Cursor連携用）</p>
+      <p class="text-secondary text-small">Export tasks to Markdown files</p>
       <a href="/app/sync?session=${session.id}"><button class="mt-10">Sync Now</button></a>
     </div>
     <h3 class="mt-20">Account</h3>
@@ -652,7 +1401,7 @@ app.post('/app/settings/theme', async (req, res) => {
 app.post('/app/project/add', async (req, res) => {
   const session = getSession(req);
   if (!session) return res.redirect('/login');
-  
+
   const { name } = req.body;
   if (name?.trim()) {
     if (!localData.projects[session.userId]) localData.projects[session.userId] = [];
@@ -660,17 +1409,17 @@ app.post('/app/project/add', async (req, res) => {
       localData.projects[session.userId].push(name.trim());
     }
   }
-  res.redirect(`/app/settings?session=${session.id}`);
+  res.redirect(req.get('Referer') || `/app?session=${session.id}`);
 });
 
 app.get('/app/project/delete/:name', async (req, res) => {
   const session = getSession(req);
   if (!session) return res.redirect('/login');
-  
+
   if (localData.projects[session.userId]) {
     localData.projects[session.userId] = localData.projects[session.userId].filter(p => p !== req.params.name);
   }
-  res.redirect(`/app/settings?session=${session.id}`);
+  res.redirect(req.get('Referer') || `/app?session=${session.id}`);
 });
 
 // Sync endpoint
